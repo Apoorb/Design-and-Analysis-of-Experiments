@@ -26,6 +26,7 @@ data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 
 # Read the data above 
 CrSp_data=pd.read_csv(data1,delimiter=r"\s+",header=0)
+
 # Y value
 y=CrSp_data['PerCrackSpring']
 y=np.matrix(y)
@@ -77,3 +78,19 @@ Coefs=np.round(Coefs,2)
 
 #Effect for Full Factorial Design
 YBar.tolist()[0]
+
+#Optimal Settings
+# A -ve, B +ve, C-ve,AB na, AC -ve ,BC -ve, ABC -ve
+#AC is an important effect. Need to ensure AC is -ve
+
+# So A +ve, B is +ve , C -ve, AB +ve,  AC -ve, BC is -ve, ABC -ve
+#######################################################
+
+# One Factor at a time design
+CrSp_data.groupby(['OilTemp'])['PerCrackSpring'].mean()
+CrSp_data.groupby(['CarbonCont'])['PerCrackSpring'].mean()
+CrSp_data.groupby(['TempStBfQuench'])['PerCrackSpring'].mean()
+
+# If we start with A. -ve A will give smaller value so we would
+# set the value of A to -ve and then change settings of B and C thus
+# we don't account for the interaction of A and C. 
