@@ -10,14 +10,14 @@ if sys.version_info[0] < 3:
     from StringIO import StringIO
 else:
     from io import StringIO
-
+import statsmodels.api as sm
 import pandas as pd 
 from sklearn import linear_model
 from scipy.stats import norm
 import numpy as np
 from matplotlib import pyplot as plt
 import statistics
-
+import math
 data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 70 0.50 1450 67
 70 0.50 1600 79
@@ -176,3 +176,46 @@ DatIndex['t_PSE'] = round(DatIndex['Effect']/PSE,2)
 DatIndex['IER_0.05']=[2.30]*7
 DatIndex['Significant'] = DatIndex.apply(lambda x : 'Significant' if x['t_PSE'] > x['IER_0.05'] else "Not Significant", axis=1)
 DatIndex.to_csv("LenthTab.csv")
+
+
+################################################################################
+################################################################################
+# Finding nominal the best solution
+RoughDat=StringIO('''No A B C Yi1 Yi2 Yi3 Yi4 Yi5
+1 -1 -1 -1 54.6 73.0 139.2 55.4 52.6 
+2 -1 -1 +1 86.2 66.2 79.2 86.0 82.6 
+3 -1 +1 -1 41.4 51.2 42.6 58.6 58.4 
+4 -1 +1 +1 62.8 64.8 74.6 74.6 64.6 
+5 +1 -1 -1 59.6 52.8 55.2 61.0 61.0 
+6 +1 -1 +1 82.0 72.8 76.6 73.4 75.0 
+7 +1 +1 -1 43.4 49.0 48.6 49.6 55.2 
+8 +1 +1 +1 65.6 65.0 64.2 60.8 77.4 
+               ''')
+RoughDat1=pd.read_csv(RoughDat,delimiter=r"\s+",header=0)
+
+
+RoughDat1['YBar']=RoughDat1[['Yi1','Yi2','Yi3','Yi4','Yi5']].mean(axis=1)
+RoughDat1['lnsBar']=(RoughDat1[['Yi1','Yi2','Yi3','Yi4','Yi5']].std(axis=1)).apply(math.log)
+#RoughDat1['Const']=[1]*(RoughDat1.shape[0])
+RoughDat1.loc[:,'AB']=RoughDat1['A']*RoughDat1['B']
+RoughDat1.loc[:,'AC']=RoughDat1['A']*RoughDat1['C']
+RoughDat1.loc[:,'BC']=RoughDat1['B']*RoughDat1['C']
+RoughDat1.loc[:,'ABC']=RoughDat1['A']*RoughDat1['B']*RoughDat1['C']
+X2= RoughDat1.loc[:,['A','B','C','AB','AC','BC','ABC']]
+Ybar=pd.DataFrame(RoughDat1['YBar'])
+LnSBar=pd.DataFrame(RoughDat1['lnsBar'])
+
+
+def HalfPlt(DatTheta):
+    
+
+
+yBarMod=linear_model.LinearRegression()
+ModSum=yBarMod.fit(X2,Ybar)
+ModSum.intercept_
+ModSum.coef_
+
+lnsBarMod=linear_model.LinearRegression()
+ModSum1=lnsBarMod.fit(X2,LnSBar)
+ModSum1.intercept_
+ModSum1.coef_
