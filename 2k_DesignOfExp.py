@@ -4,6 +4,7 @@
 Created on Thu Oct 11 20:08:07 2018
 @author: Apoorb
 """
+import os
 import sys
 if sys.version_info[0] < 3: 
     from StringIO import StringIO
@@ -15,6 +16,7 @@ from sklearn import linear_model
 from scipy.stats import norm
 import numpy as np
 from matplotlib import pyplot as plt
+import statistics
 
 data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 70 0.50 1450 67
@@ -133,6 +135,11 @@ X_DzMat=np.matrix(DatX.loc[:,['x1','x2','x3','x1x2','x1x3','x2x3','x1x2x3']])
 #Get the factorial effect
 FactorialEff=Y*X_DzMat*(1/4)
 
+DatIndex= pd.DataFrame({'Var':['x1','x2','x3','x1x2','x1x3','x2x3','x1x2x3'],
+                        'Effect':FactorialEff.tolist()[0]})
+DatIndex=DatIndex.sort_values(by=['Effect'])
+Var=DatIndex['Var']
+
 SrtEff=np.sort(FactorialEff).tolist()[0]
 
 i=np.linspace(1,7,7).tolist()
@@ -145,10 +152,27 @@ def HalfPlt(i_):
     return (norm.ppf(0.5+0.5*(i_-0.5)/7))
 dat2['NorQuant']=dat2['i'].apply(HalfPlt)
 
-plt.plot(dat2['absEff'],dat2['NorQuant'],marker='o',ls='none')
+print('Current working directory ',os.getcwd())
+os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
+print('Current working directory ',os.getcwd())
+for i,type in enumerate(Var):
+    x = dat2['NorQuant'][i]
+    y = dat2['absEff'][i]
+    plt.scatter(x, y, marker='x', color='red')
+    plt.text(x+0.05, y+0.05, type, fontsize=9)
+    
 plt.title("Half-Normal Plot")
 plt.xlabel("Normal Quantile")
-plt.ylabel("Effect")
-for i,j in zip(dat2['absEff'],dat2['NorQuant']):
-    
 plt.savefig('HalfPlot.png')
+
+
+# Lenth's Method for  testing signficance for experiments without
+# variance estimate
+s0=1.5*statistics.median(map(float,dat2['absEff']))
+tpLst=[i for i in dat2['absEff'] if i<2.5*s0]
+PSE =1.5 * statistics.median(tpLst)
+#Lenth's t stat
+DatIndex['t_PSE'] = round(DatIndex['Effect']/PSE,2)
+DatIndex['IER_0.05']=[2.30]*7
+DatIndex['Significant'] = DatIndex.apply(lambda x : 'Significant' if x['t_PSE'] > x['IER_0.05'] else "Not Significant", axis=1)
+DatIndex.to_csv("LenthTab.csv")
