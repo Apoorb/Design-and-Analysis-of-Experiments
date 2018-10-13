@@ -12,7 +12,9 @@ else:
 
 import pandas as pd 
 from sklearn import linear_model
+from scipy.stats import norm
 import numpy as np
+from matplotlib import pyplot as plt
 
 data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 70 0.50 1450 67
@@ -69,6 +71,7 @@ regr = linear_model.LinearRegression()
 
 # Train the model using the training sets
 R1=regr.fit(X,Y)
+R1.intercept_
 Coefs=R1.coef_
 #Factorial effect is twice the coeff
 Coefs=2*Coefs
@@ -94,3 +97,58 @@ CrSp_data.groupby(['TempStBfQuench'])['PerCrackSpring'].mean()
 # If we start with A. -ve A will give smaller value so we would
 # set the value of A to -ve and then change settings of B and C thus
 # we don't account for the interaction of A and C. 
+
+
+#********************************************************************
+#********************************************************************
+ExpDa=StringIO('''No X1 X2 X3 Y RandOrd
+1  A  low   Y  11  1 
+2  B  low   Y  12  4 
+3  A  high  Y  10  5 
+4  B  high  Y  11  3 
+5  A  low   Z  16  2 
+6  B  low   Z  14  6 
+7  A  high  Z  15  7 
+8  B  high  Z  19  8  
+               ''')
+ExpDa1=pd.read_csv(ExpDa,delimiter=r"\s+",header=0)
+Y=np.matrix(ExpDa1['Y'])
+X3=[-1 if(i=='Y') else +1 for i in ExpDa1['X3']]
+nrows1=len(X3)
+#Main effect of X3
+ME_x3=X3*np.transpose(Y)/(nrows1/2)
+ME_x3
+
+DatX=ExpDa1[[i for i in ExpDa1.columns.tolist() if i.find('X')==0]]
+DatX.loc[:,'x1']=np.where(DatX['X1']=='A',-1,1)
+DatX.loc[:,'x2']=np.where(DatX['X2']=='low',-1,1)
+DatX.loc[:,'x3']=np.where(DatX['X3']=='Y',-1,1)
+DatX.loc[:,'x1x2']=DatX['x1']*DatX['x2']
+DatX.loc[:,'x1x3']=DatX['x1']*DatX['x3']
+DatX.loc[:,'x2x3']=DatX['x2']*DatX['x3']
+DatX.loc[:,'x1x2x3']=DatX['x1']*DatX['x2']*DatX['x3']
+
+X_DzMat=np.matrix(DatX.loc[:,['x1','x2','x3','x1x2','x1x3','x2x3','x1x2x3']])
+
+#Get the factorial effect
+FactorialEff=Y*X_DzMat*(1/4)
+
+SrtEff=np.sort(FactorialEff).tolist()[0]
+
+i=np.linspace(1,7,7).tolist()
+d={'i':i,'SrtEff':SrtEff}
+dat2=pd.DataFrame(d)
+
+dat2['absEff']=dat2['SrtEff'].apply(abs)
+
+def HalfPlt(i_):
+    return (norm.ppf(0.5+0.5*(i_-0.5)/7))
+dat2['NorQuant']=dat2['i'].apply(HalfPlt)
+
+plt.plot(dat2['absEff'],dat2['NorQuant'],marker='o',ls='none')
+plt.title("Half-Normal Plot")
+plt.xlabel("Normal Quantile")
+plt.ylabel("Effect")
+for i,j in zip(dat2['absEff'],dat2['NorQuant']):
+    
+plt.savefig('HalfPlot.png')
