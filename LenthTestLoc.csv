@@ -1,0 +1,8 @@
+,FactEff,Var1,absTheta,absEff,t_PSE,IER_0.05,Significant
+0,-6.02,A,6.02,6.02,-0.88,2.3,Not Significant
+1,-13.6,B,13.6,13.6,-2.0,2.3,Not Significant
+2,14.6,C,14.6,14.6,2.14,2.3,Not Significant
+3,4.54,AB,4.54,4.54,0.67,2.3,Not Significant
+4,3.14,AC,3.14,3.14,0.46,2.3,Not Significant
+5,3.04,BC,3.04,3.04,0.45,2.3,Not Significant
+6,-3.34,ABC,3.34,3.34,-0.49,2.3,Not Significant

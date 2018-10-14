@@ -10,7 +10,6 @@ if sys.version_info[0] < 3:
     from StringIO import StringIO
 else:
     from io import StringIO
-import statsmodels.api as sm
 import pandas as pd 
 from sklearn import linear_model
 from scipy.stats import norm
@@ -21,9 +20,12 @@ import math
 
 
 print('Current working directory ',os.getcwd())
-os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
+#os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
+os.chdir('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
+ 
 print('Current working directory ',os.getcwd())
 
+# Function to plot the Half-Normal Plot
 def HalfPlt_V1(DatTemp,Theta,Var_,PltName):
     len1 =len(DatTemp[Var_])
     DatTemp['absTheta']=DatTemp[Theta].apply(abs)
@@ -42,6 +44,22 @@ def HalfPlt_V1(DatTemp,Theta,Var_,PltName):
     ax1.set_ylabel("effects")
     fig1.savefig(PltName)
 
+
+# Function to perform Lenth test
+#Lenth's Method for  testing signficance for experiments without
+# variance estimate
+def LenthsTest(dat,fef,fileNm,IER_5per=2.30):
+    len1=len(dat[fef])
+    dat['absEff']=dat[fef].apply(abs)
+    s0=1.5*statistics.median(map(float,dat['absEff']))
+    tpLst=[i for i in dat['absEff'] if i<2.5*s0]
+    PSE =1.5 * statistics.median(tpLst)
+    #Lenth's t stat
+    dat['t_PSE'] = (round(dat[fef]/PSE,2))
+    dat['IER_0.05']=[IER_5per]*len1
+    dat['Significant'] = dat.apply(lambda x : 'Significant' if abs(x['t_PSE']) > x['IER_0.05'] else "Not Significant", axis=1)
+    dat.to_csv(fileNm)
+    return(dat)
 
 data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 70 0.50 1450 67
@@ -163,23 +181,14 @@ FactorialEff=Y*X_DzMat*(1/4)
 DatIndex= pd.DataFrame({'Var':['x1','x2','x3','x1x2','x1x3','x2x3','x1x2x3'],
                         'Effect':FactorialEff.tolist()[0]})
 DatIndex=DatIndex.sort_values(by=['Effect'])
+#DatIndex.reset_index(drop=True)
 Var=DatIndex['Var']
-d={'FaEff':FactorialEff.tolist()[0],'Var':Var}
+d={'FaEff':DatIndex['Effect'],'Var':Var}
 dat2=pd.DataFrame(d)
 HalfPlt_V1(dat2,'FaEff','Var','HalfPlot.png')
 
-# Lenth's Method for  testing signficance for experiments without
-# variance estimate
-s0=1.5*statistics.median(map(float,dat2['absEff']))
-tpLst=[i for i in dat2['absEff'] if i<2.5*s0]
-PSE =1.5 * statistics.median(tpLst)
-#Lenth's t stat
-DatIndex['t_PSE'] = round(DatIndex['Effect']/PSE,2)
-DatIndex['IER_0.05']=[2.30]*7
-DatIndex['Significant'] = DatIndex.apply(lambda x : 'Significant' if x['t_PSE'] > x['IER_0.05'] else "Not Significant", axis=1)
-DatIndex.to_csv("LenthTab.csv")
 
-
+LenthsTest(dat2,'FaEff',"LenthTab.csv",2.30)
 ################################################################################
 ################################################################################
 # Finding nominal the best solution
@@ -197,7 +206,7 @@ RoughDat1=pd.read_csv(RoughDat,delimiter=r"\s+",header=0)
 
 
 RoughDat1['YBar']=RoughDat1[['Yi1','Yi2','Yi3','Yi4','Yi5']].mean(axis=1)
-RoughDat1['lnsBar']=(RoughDat1[['Yi1','Yi2','Yi3','Yi4','Yi5']].std(axis=1)).apply(math.log)
+RoughDat1['lnsBar']=((RoughDat1[['Yi1','Yi2','Yi3','Yi4','Yi5']].std(axis=1))**2).apply(math.log)
 #RoughDat1['Const']=[1]*(RoughDat1.shape[0])
 RoughDat1.loc[:,'AB']=RoughDat1['A']*RoughDat1['B']
 RoughDat1.loc[:,'AC']=RoughDat1['A']*RoughDat1['C']
@@ -225,14 +234,41 @@ Theta='FactEff'
 i='i_'
 Var_='Var1'
 '''
+LenthsTest(Dat2,'FactEff',"LenthTestLoc.csv",IER_5per=2.30)
+#Only consider B and C for regresion based on Lenth Test Results
+X2= RoughDat1.loc[:,['B','C']]
+# Get the factorial effects
+M1=linear_model.LinearRegression()
+M1Sum=yBarMod.fit(X2,Ybar)
+M1Sum.intercept_
+M1Sum.coef_
 
+
+#####################
+#Dispersion Effect
+X2= RoughDat1.loc[:,['A','B','C','AB','AC','BC','ABC']]
 lnsBarMod=linear_model.LinearRegression()
 ModSum2=lnsBarMod.fit(X2,LnSBar)
 ModSum2.intercept_
 ModSum2.coef_
 FactEff2=np.round(2*ModSum2.coef_[0],2).tolist()
 Var1=['A','B','C','AB','AC','BC','ABC']
+
+
+################
+#Dispersion Effect
 Dat3=pd.DataFrame({'FactEff':FactEff2,'Var1':Var1})
 Dat3.to_excel("RoughDisperEff.xls")
-
 HalfPlt_V1(Dat3,'FactEff','Var1','HalfPlot2.png')
+LenthsTest(Dat3,'FactEff',"LenthTestDisper.csv",IER_5per=2.30)
+#Only consider B and C for regresion based on Lenth Test Results
+X2= RoughDat1.loc[:,['A']]
+# Get the factorial effects
+M2=linear_model.LinearRegression()
+M2Sum=yBarMod.fit(X2,LnSBar)
+M2Sum.intercept_
+M2Sum.coef_
+
+
+
+
