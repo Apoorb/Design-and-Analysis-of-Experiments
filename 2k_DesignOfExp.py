@@ -18,6 +18,29 @@ import numpy as np
 from matplotlib import pyplot as plt
 import statistics
 import math
+
+
+
+
+def HalfPlt_V1(DatTemp,Theta,Var_,PltName):
+    len1 =len(DatTemp[Var_])
+    DatTemp['absTheta']=DatTemp[Theta].apply(abs)
+    DatTemp=DatTemp.sort_values(by=['absTheta'])
+    DatTemp = DatTemp.reset_index(drop=True)
+    DatTemp['i']= np.linspace(1,len1,len1).tolist()
+    DatTemp['NorQuant']=DatTemp['i'].apply(lambda x:norm.ppf(0.5+0.5*(x-0.5)/len1))
+    fig1, ax1 =plt.subplots()
+    ax1.scatter(DatTemp['NorQuant'], DatTemp['absTheta'], marker='x', color='red')
+    for j,type in enumerate(DatTemp[Var_]):
+        x = DatTemp['NorQuant'][j]
+        y = DatTemp['absTheta'][j]
+        ax1.text(x+0.05, y+0.05, type, fontsize=9)
+    ax1.set_title("Half-Normal Plot")
+    ax1.set_xlabel("Normal Quantile")
+    ax1.set_ylabel("effects")
+    fig1.savefig(PltName)
+
+
 data1=StringIO('''OilTemp CarbonCont TempStBfQuench PerCrackSpring
 70 0.50 1450 67
 70 0.50 1600 79
@@ -148,9 +171,7 @@ dat2=pd.DataFrame(d)
 
 dat2['absEff']=dat2['SrtEff'].apply(abs)
 
-def HalfPlt(i_):
-    return (norm.ppf(0.5+0.5*(i_-0.5)/7))
-dat2['NorQuant']=dat2['i'].apply(HalfPlt)
+dat2['NorQuant']=dat2['i'].apply(lambda x :norm.ppf(0.5+0.5*(x-0.5)/7))
 
 print('Current working directory ',os.getcwd())
 os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
@@ -206,16 +227,28 @@ Ybar=pd.DataFrame(RoughDat1['YBar'])
 LnSBar=pd.DataFrame(RoughDat1['lnsBar'])
 
 
-def HalfPlt(DatTheta):
-    
-
-
+# Get the factorial effects
 yBarMod=linear_model.LinearRegression()
 ModSum=yBarMod.fit(X2,Ybar)
-ModSum.intercept_
-ModSum.coef_
+#Factorial effect is twice the coeff
+FactEff=np.round(2*ModSum.coef_[0],2).tolist()
+Var1=['A','B','C','AB','AC','BC','ABC']
+Dat2=pd.DataFrame({'FactEff':FactEff,'Var1':Var1})
+
+    
+HalfPlt_V1(Dat2,'FactEff','Var1','HalfPlot1.png')
+'''
+DatTemp=Dat2
+Theta='FactEff'
+i='i_'
+Var_='Var1'
+'''
 
 lnsBarMod=linear_model.LinearRegression()
-ModSum1=lnsBarMod.fit(X2,LnSBar)
-ModSum1.intercept_
-ModSum1.coef_
+ModSum2=lnsBarMod.fit(X2,LnSBar)
+ModSum2.intercept_
+ModSum2.coef_
+FactEff2=np.round(2*ModSum2.coef_[0],2).tolist()
+Var1=['A','B','C','AB','AC','BC','ABC']
+Dat3=pd.DataFrame({'FactEff':FactEff2,'Var1':Var1})
+HalfPlt_V1(Dat3,'FactEff','Var1','HalfPlot2.png')
