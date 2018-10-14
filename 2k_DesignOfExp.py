@@ -20,7 +20,9 @@ import statistics
 import math
 
 
-
+print('Current working directory ',os.getcwd())
+os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
+print('Current working directory ',os.getcwd())
 
 def HalfPlt_V1(DatTemp,Theta,Var_,PltName):
     len1 =len(DatTemp[Var_])
@@ -162,30 +164,9 @@ DatIndex= pd.DataFrame({'Var':['x1','x2','x3','x1x2','x1x3','x2x3','x1x2x3'],
                         'Effect':FactorialEff.tolist()[0]})
 DatIndex=DatIndex.sort_values(by=['Effect'])
 Var=DatIndex['Var']
-
-SrtEff=np.sort(FactorialEff).tolist()[0]
-
-i=np.linspace(1,7,7).tolist()
-d={'i':i,'SrtEff':SrtEff}
+d={'FaEff':FactorialEff.tolist()[0],'Var':Var}
 dat2=pd.DataFrame(d)
-
-dat2['absEff']=dat2['SrtEff'].apply(abs)
-
-dat2['NorQuant']=dat2['i'].apply(lambda x :norm.ppf(0.5+0.5*(x-0.5)/7))
-
-print('Current working directory ',os.getcwd())
-os.chdir('C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation')
-print('Current working directory ',os.getcwd())
-for i,type in enumerate(Var):
-    x = dat2['NorQuant'][i]
-    y = dat2['absEff'][i]
-    plt.scatter(x, y, marker='x', color='red')
-    plt.text(x+0.05, y+0.05, type, fontsize=9)
-    
-plt.title("Half-Normal Plot")
-plt.xlabel("Normal Quantile")
-plt.savefig('HalfPlot.png')
-
+HalfPlt_V1(dat2,'FaEff','Var','HalfPlot.png')
 
 # Lenth's Method for  testing signficance for experiments without
 # variance estimate
@@ -222,6 +203,7 @@ RoughDat1.loc[:,'AB']=RoughDat1['A']*RoughDat1['B']
 RoughDat1.loc[:,'AC']=RoughDat1['A']*RoughDat1['C']
 RoughDat1.loc[:,'BC']=RoughDat1['B']*RoughDat1['C']
 RoughDat1.loc[:,'ABC']=RoughDat1['A']*RoughDat1['B']*RoughDat1['C']
+RoughDat1.to_csv("RoughnessDat.csv")
 X2= RoughDat1.loc[:,['A','B','C','AB','AC','BC','ABC']]
 Ybar=pd.DataFrame(RoughDat1['YBar'])
 LnSBar=pd.DataFrame(RoughDat1['lnsBar'])
@@ -234,7 +216,7 @@ ModSum=yBarMod.fit(X2,Ybar)
 FactEff=np.round(2*ModSum.coef_[0],2).tolist()
 Var1=['A','B','C','AB','AC','BC','ABC']
 Dat2=pd.DataFrame({'FactEff':FactEff,'Var1':Var1})
-
+Dat2.to_excel("RoughlocEff.xls")
     
 HalfPlt_V1(Dat2,'FactEff','Var1','HalfPlot1.png')
 '''
@@ -251,4 +233,6 @@ ModSum2.coef_
 FactEff2=np.round(2*ModSum2.coef_[0],2).tolist()
 Var1=['A','B','C','AB','AC','BC','ABC']
 Dat3=pd.DataFrame({'FactEff':FactEff2,'Var1':Var1})
+Dat3.to_excel("RoughDisperEff.xls")
+
 HalfPlt_V1(Dat3,'FactEff','Var1','HalfPlot2.png')
