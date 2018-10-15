@@ -29,3 +29,9 @@ files1 = [file for file in files if re.search(r'2045',file, re.I|re.M)]
 
 for f in files1:
     shutil.copy(os.path.join(OriginPath,f), DestinPath)
+    
+
+################################################################################
+# Deleting files
+for f in files1:
+    os.remove(os.path.join(DestinPath,f))
