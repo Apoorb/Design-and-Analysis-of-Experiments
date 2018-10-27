@@ -271,4 +271,78 @@ M2Sum.coef_
 
 
 
+##########################################
+#Q28
+WeldDat=pd.read_csv("Prob28Dat.csv")
+WeldDat=WeldDat.drop(16,axis=0)
+nfactor=WeldDat.shape[1]-3
+RangeFact=range(0,nfactor)
+for j in RangeFact:
+     WeldDat.iloc[:,j]=WeldDat.iloc[:,j].apply(lambda x: 1 if(x=="+") else -1)
 
+WeldDat
+X = WeldDat.iloc[:,1:6]
+colnm=X.columns
+for j in X:
+    for i in X:
+        if(i<j):
+            X.loc[:,'%s'% (i+j)]=X[i]*X[j]    
+            #print("i:%s j:%s"%(i,j))
+            
+X = X[["ABCDE","A","B","C","D","E","AB","AC","AD","AE","BC","BD","BE","CD","CE","DE"]]
+X=X.drop(["ABCDE"],axis=1)
+Tp=WeldDat[['y1','y2','y3']]
+Tp['YBar']=Tp[['y1','y2','y3']].mean(axis=1)
+Tp['lnsBar']=((Tp[['y1','y2','y3']].std(axis=1))**2).apply(lambda x: math.log(10**(-10)) if x<0.00001 else math.log(x))
+Y=Tp[["YBar"]]
+Z=Tp[["lnsBar"]]
+
+
+# Get the factorial effects
+yBarMod=linear_model.LinearRegression()
+ModSum=yBarMod.fit(X,Y)
+#Factorial effect is twice the coeff
+FactEff=np.round(2*ModSum.coef_[0],2).tolist()
+Var1=X.columns
+Dat2=pd.DataFrame({'FactEff':FactEff,'Var1':Var1})
+Dat2.to_excel("WeldEff.xls")
+    
+HalfPlt_V1(Dat2,'FactEff','Var1','HalfPlotWElD.png')
+'''
+DatTemp=Dat2
+Theta='FactEff'
+i='i_'
+Var_='Var1'
+'''
+LenthsTest(Dat2,'FactEff',"LenthTestLoc.csv",IER_5per=1.7)
+
+#Only consider B and C for regresion based on Lenth Test Results
+X2= X.loc[:,['A','AC']]
+# Get the factorial effects
+M1=linear_model.LinearRegression()
+M1Sum=M1.fit(X2,Y)
+M1Sum.intercept_
+M1Sum.coef_
+
+#####################
+#Dispersion Effect
+lnsBarMod=linear_model.LinearRegression()
+ModSum2=lnsBarMod.fit(X,Z)
+ModSum2.intercept_
+ModSum2.coef_
+FactEff2=np.round(2*ModSum2.coef_[0],2).tolist()
+Var1=X.columns
+
+################
+#Dispersion Effect
+Dat3=pd.DataFrame({'FactEff':FactEff2,'Var1':Var1})
+Dat3.to_excel("WeldDisperEff.xls")
+HalfPlt_V1(Dat3,'FactEff','Var1','HalfPlotWeld2.png')
+LenthsTest(Dat3,'FactEff',"LenthTestDisper.csv",IER_5per=1.7)
+
+X2= X.loc[:,['C','D']]
+# Get the factorial effects
+M1=linear_model.LinearRegression()
+M1Sum=M1.fit(X2,Z)
+M1Sum.intercept_
+M1Sum.coef_

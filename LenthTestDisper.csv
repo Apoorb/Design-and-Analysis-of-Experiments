@@ -1,8 +1,16 @@
 ,FactEff,Var1,absTheta,absEff,t_PSE,IER_0.05,Significant
-0,-1.85,A,1.85,1.85,-1.58,2.3,Not Significant
-1,-0.59,B,0.59,0.59,-0.5,2.3,Not Significant
-2,-0.72,C,0.72,0.72,-0.62,2.3,Not Significant
-3,1.25,AB,1.25,1.25,1.07,2.3,Not Significant
-4,1.12,AC,1.12,1.12,0.96,2.3,Not Significant
-5,0.78,BC,0.78,0.78,0.67,2.3,Not Significant
-6,-0.36,ABC,0.36,0.36,-0.31,2.3,Not Significant
+0,-5.79,A,5.79,5.79,-0.89,1.7,Not Significant
+1,-4.96,B,4.96,4.96,-0.77,1.7,Not Significant
+2,-11.47,C,11.47,11.47,-1.77,1.7,Significant
+3,11.14,D,11.14,11.14,1.72,1.7,Significant
+4,4.2,E,4.2,4.2,0.65,1.7,Not Significant
+5,4.96,AB,4.96,4.96,0.77,1.7,Not Significant
+6,-3.5,AC,3.5,3.5,-0.54,1.7,Not Significant
+7,3.83,AD,3.83,3.83,0.59,1.7,Not Significant
+8,-4.2,AE,4.2,4.2,-0.65,1.7,Not Significant
+9,-4.32,BC,4.32,4.32,-0.67,1.7,Not Significant
+10,3.56,BD,3.56,3.56,0.55,1.7,Not Significant
+11,-3.93,BE,3.93,3.93,-0.61,1.7,Not Significant
+12,11.04,CD,11.04,11.04,1.7,1.7,Not Significant
+13,3.56,CE,3.56,3.56,0.55,1.7,Not Significant
+14,-4.32,DE,4.32,4.32,-0.67,1.7,Not Significant
