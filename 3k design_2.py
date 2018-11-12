@@ -15,12 +15,16 @@ from scipy.stats import norm
 from matplotlib import pyplot as plt
 from sklearn import linear_model
 import statistics
-
-
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
+from statsmodels.graphics.factorplots import interaction_plot
+from scipy import stats
+import seaborn as sns
 
 
 print('Current working directory ',os.getcwd())
-os.chdir('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
+#os.chdir('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
+os.chdir("C:\\Users\\a-bibeka\\Documents\\GitHub\\Python-Code-Compilation")
 print('Current working directory ',os.getcwd())
 
 
@@ -115,7 +119,102 @@ Df.head()
 Df.A=Df.A.apply(int)
 
 DesMat=Df[["A","B","C","D","E","F"]]
-DesMat.loc[:,"AB"]=(DesMat.A+DesMat.B)%3
-DesMat.loc[:,"AB2"]=(DesMat.A+2*DesMat.B)%3
 DesMat.loc[:,"AC"]=(DesMat.A+DesMat.C)%3
 DesMat.loc[:,"AC2"]=(DesMat.A+2*DesMat.C)%3
+DesMat.loc[:,"AE"]=(DesMat.A+DesMat.E)%3
+DesMat.loc[:,"AE2"]=(DesMat.A+2*DesMat.E)%3
+
+Df.loc[:,"Sbar"]=Df[["S1","S2"]].apply(statistics.mean,axis=1)
+Df.loc[:,"S_lns2"]=Df[["S1","S2"]].apply(statistics.variance,axis=1).apply(lambda x : math.log(x) if x!=0 else math.log(0.1**20))
+
+
+f,axes=plt.subplots(2,3,sharex=True,sharey=True)
+g=sns.factorplot(x="A",y="Sbar",data=Df,ci=None,ax=axes[0,0])
+g=sns.factorplot(x="B",y="Sbar",data=Df,ci=None,ax=axes[0,1])
+g=sns.factorplot(x="C",y="Sbar",data=Df,ci=None,ax=axes[0,2])
+g=sns.factorplot(x="D",y="Sbar",data=Df,ci=None,ax=axes[1,0])
+g=sns.factorplot(x="E",y="Sbar",data=Df,ci=None,ax=axes[1,1])
+g=sns.factorplot(x="F",y="Sbar",data=Df,ci=None,ax=axes[1,2])
+plt.tight_layout()
+f.savefig("MainEffPlt.png")
+
+
+fig1=interaction_plot(Df.A,Df.C,Df.Sbar)
+fig2=interaction_plot(Df.A,Df.E,Df.Sbar)
+
+#frames=[DesMat,DesMat]
+#Df1=pd.concat(frames)
+#Df1.loc[:,"Y"]=Df.S1.tolist()+Df.S2.tolist()
+#
+#Df1.to_csv("Q9Dat.csv")
+
+f2,axes1=plt.subplots(2,3,sharex=True,sharey=True)
+g=sns.factorplot(x="A",y="S_lns2",data=Df,ci=None,ax=axes1[0,0])
+g=sns.factorplot(x="B",y="S_lns2",data=Df,ci=None,ax=axes1[0,1])
+g=sns.factorplot(x="C",y="S_lns2",data=Df,ci=None,ax=axes1[0,2])
+g=sns.factorplot(x="D",y="S_lns2",data=Df,ci=None,ax=axes1[1,0])
+g=sns.factorplot(x="E",y="S_lns2",data=Df,ci=None,ax=axes1[1,1])
+g=sns.factorplot(x="F",y="S_lns2",data=Df,ci=None,ax=axes1[1,2])
+plt.tight_layout()
+fig1=interaction_plot(Df.A,Df.C,Df.S_lns2)
+fig2=interaction_plot(Df.A,Df.E,Df.S_lns2)
+
+regr=linear_model.LinearRegression()
+# Train the model using the training sets
+Zs1=Df.S_lns2
+R1=regr.fit(DesMat,Zs1)
+R1.intercept_
+
+ef2=R1.coef_
+ef2
+dat=pd.DataFrame({"FactEff":ef2,"Var1":DesMat.columns})
+#dat
+
+HalfPlt_V1(dat,'FactEff','Var1','HalfPlotStrn_Q9.png')
+
+#IER at alpha =5% and 
+LenthsTest(dat,'FactEff',"LenthTestDisper_Str_Q9.csv",IER_Alpha=2.21)
+
+
+def contrast_l(ef):
+    contr=int()
+    if(ef==0):contr=-1/math.sqrt(2)
+    elif(ef==1):contr=0/math.sqrt(2)
+    else:contr=1/math.sqrt(2)
+    return contr
+def contrast_q(ef):
+    contr=int()
+    if(ef==0):contr=1/math.sqrt(6)
+    elif(ef==1):contr=-2/math.sqrt(6)
+    else:contr=1/math.sqrt(6)
+    return contr
+
+# 6 Main effects
+datXy=pd.DataFrame()
+datXy["Al"]=DesMat.A.apply(contrast_l)
+datXy["Bl"]=DesMat.B.apply(contrast_l)
+datXy["Cl"]=DesMat.C.apply(contrast_l)
+datXy["Dl"]=DesMat.D.apply(contrast_l)
+datXy["El"]=DesMat.E.apply(contrast_l)
+datXy["Fl"]=DesMat.F.apply(contrast_l)
+
+datXy["Aq"]=DesMat.A.apply(contrast_q)
+datXy["Bq"]=DesMat.B.apply(contrast_q)
+datXy["Cq"]=DesMat.C.apply(contrast_q)
+datXy["Dq"]=DesMat.D.apply(contrast_q)
+datXy["Eq"]=DesMat.E.apply(contrast_q)
+datXy["Fq"]=DesMat.F.apply(contrast_q)
+
+datXy["ACll"]=datXy.Al*datXy.Cl
+datXy["AClq"]=datXy.Al*datXy.Cq
+datXy["ACql"]=datXy.Aq*datXy.Cl
+datXy["ACqq"]=datXy.Aq*datXy.Cq
+
+datXy["AEll"]=datXy.Al*datXy.El
+datXy["AElq"]=datXy.Al*datXy.Eq
+datXy["AEql"]=datXy.Aq*datXy.El
+datXy["AEqq"]=datXy.Aq*datXy.Eq
+
+datXy.loc[:,"Y"]=Df.Sbar
+
+datXy.to_csv("DesDatQ9.csv")
