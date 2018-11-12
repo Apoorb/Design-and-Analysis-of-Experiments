@@ -71,6 +71,7 @@ def LenthsTest(dat,fef,fileNm,IER_Alpha=2.30):
     dat['t_PSE'] = (round(dat[fef]/PSE,2))
     dat['IER_Alpha']=[IER_Alpha]*len1
     dat['Significant'] = dat.apply(lambda x : 'Significant' if abs(x['t_PSE']) > x['IER_Alpha'] else "Not Significant", axis=1)
+    dat=dat[["Var1","FactEff","t_PSE","IER_Alpha","Significant"]]
     dat.to_csv(fileNm)
     return(dat)
     
@@ -106,12 +107,23 @@ TempIO= StringIO('''Run A B C D S1 S2 S3 F1 F2 F3
 Df=pd.read_csv(TempIO,delimiter=r"\s+",header=0)
 Df.head()
 
+DesMat=Df[["A","B","C"]]
+DesMat.loc[:,"AB"]=(DesMat.A+DesMat.B)%3
+DesMat.loc[:,"AB2"]=(DesMat.A+2*DesMat.B)%3
+DesMat.loc[:,"AC"]=(DesMat.A+DesMat.C)%3
+DesMat.loc[:,"AC2"]=(DesMat.A+2*DesMat.C)%3
+DesMat.loc[:,"BC"]=(DesMat.B+DesMat.C)%3
+DesMat.loc[:,"BC2"]=(DesMat.B+2*DesMat.C)%3
+
+DesMat.loc[:,"ABC"]=(DesMat.A+DesMat.B+DesMat.C)%3
+DesMat.loc[:,"ABC2"]=(DesMat.A+DesMat.B+2*DesMat.C)%3
+DesMat.loc[:,"AB2C"]=(DesMat.A+2*DesMat.B+DesMat.C)%3
+DesMat.loc[:,"AB2C2"]=(DesMat.A+2*DesMat.B+2*DesMat.C)%3
 
 Df['S_lnsBar']= Df[['S1','S2','S3']].apply(statistics.variance,axis=1).apply(math.log)
 
 Df['F_lnsBar']=((Df[['F1','F2','F3']].std(axis=1))**2).apply(math.log)
 Df=Df.drop(["D","S1","S2","S3","F1","F2","F3"],axis=1)
-Zs=np.matrix(Df.S_lnsBar)
 Df.head()
 
 def contrast_l(ef):
@@ -128,56 +140,36 @@ def contrast_q(ef):
     return contr
 
 # 6 Main effects
-Df["Al"]=Df.A.apply(contrast_l)
-Df["Bl"]=Df.B.apply(contrast_l)
-Df["Cl"]=Df.C.apply(contrast_l)
-Df["Aq"]=Df.A.apply(contrast_q)
-Df["Bq"]=Df.B.apply(contrast_q)
-Df["Cq"]=Df.C.apply(contrast_q)
+X=pd.DataFrame()
+X["Al"]=DesMat.A.apply(contrast_l)
+X["Bl"]=DesMat.B.apply(contrast_l)
+X["Cl"]=DesMat.C.apply(contrast_l)
+X["Aq"]=DesMat.A.apply(contrast_q)
+X["Bq"]=DesMat.B.apply(contrast_q)
+X["Cq"]=DesMat.C.apply(contrast_q)
 
 # 12 2 way effects
-Df["ABll"]=Df.loc[:,["Al","Bl"]].apply(np.product,axis=1)
-Df["ABlq"]=Df.loc[:,["Al","Bq"]].apply(np.product,axis=1)
-Df["ABql"]=Df.loc[:,["Aq","Bl"]].apply(np.product,axis=1)
-Df["ABqq"]=Df.loc[:,["Aq","Bq"]].apply(np.product,axis=1)
-
-Df["ACll"]=Df.loc[:,["Al","Cl"]].apply(np.product,axis=1)
-Df["AClq"]=Df.loc[:,["Al","Cq"]].apply(np.product,axis=1)
-Df["ACql"]=Df.loc[:,["Aq","Cl"]].apply(np.product,axis=1)
-Df["ACqq"]=Df.loc[:,["Aq","Cq"]].apply(np.product,axis=1)
-
-Df["BCll"]=Df.loc[:,["Bl","Cl"]].apply(np.product,axis=1)
-Df["BClq"]=Df.loc[:,["Bl","Cq"]].apply(np.product,axis=1)
-Df["BCql"]=Df.loc[:,["Bq","Cl"]].apply(np.product,axis=1)
-Df["BCqq"]=Df.loc[:,["Bq","Cq"]].apply(np.product,axis=1)
-
+X["ABl"]=DesMat.AB.apply(contrast_l)
+X["ABq"]=DesMat.AB.apply(contrast_q)
+X["AB2l"]=DesMat.AB2.apply(contrast_l)
+X["AB2q"]=DesMat.AB2.apply(contrast_q)
+X["ACl"]=DesMat.AC.apply(contrast_l)
+X["ACq"]=DesMat.AC.apply(contrast_q)
+X["AC2l"]=DesMat.AC2.apply(contrast_l)
+X["AC2q"]=DesMat.AC2.apply(contrast_q)
+X["BCl"]=DesMat.BC.apply(contrast_l)
+X["BCq"]=DesMat.BC.apply(contrast_q)
+X["BC2l"]=DesMat.BC2.apply(contrast_l)
+X["BC2q"]=DesMat.BC2.apply(contrast_q)
 # 8 3 way effects
-Df["ABClll"]=Df.loc[:,["Al","Bl","Cl"]].apply(np.product,axis=1)
-Df["ABCllq"]=Df.loc[:,["Al","Bl","Cq"]].apply(np.product,axis=1)
-Df["ABClql"]=Df.loc[:,["Al","Bq","Cl"]].apply(np.product,axis=1)
-Df["ABCqll"]=Df.loc[:,["Aq","Bl","Cl"]].apply(np.product,axis=1)
-Df["ABClqq"]=Df.loc[:,["Al","Bq","Cq"]].apply(np.product,axis=1)
-Df["ABCqql"]=Df.loc[:,["Aq","Bq","Cl"]].apply(np.product,axis=1)
-Df["ABCqlq"]=Df.loc[:,["Aq","Bl","Cq"]].apply(np.product,axis=1)
-Df["ABCqqq"]=Df.loc[:,["Aq","Bq","Cq"]].apply(np.product,axis=1)
-Df.to_csv("Data_Str.csv")
-Df.iloc[:,6:]
-
-Df.iloc[:,6:].shape
-
-Df.columns
-Df.loc[:,["Al","S_lnsBar"]].apply(np.product,axis=1).sum()
-
-X=Df.iloc[:,6:]
-X1=np.matrix(X)
-Diag=(X1.transpose()*X1).diagonal()
-Diag
-
-ef2=(Zs*X1).tolist()[0]
-dat=pd.DataFrame({"FactEff_t":ef2,"Var1":X.columns})
-ef2
-
-np.divide((Zs*X1),Diag)
+X["ABCl"]=DesMat.ABC.apply(contrast_l)
+X["ABCq"]=DesMat.ABC.apply(contrast_q)
+X["ABC2l"]=DesMat.ABC2.apply(contrast_l)
+X["ABC2q"]=DesMat.ABC2.apply(contrast_q)
+X["AB2Cl"]=DesMat.AB2C.apply(contrast_l)
+X["AB2Cq"]=DesMat.AB2C.apply(contrast_q)
+X["AB2C2l"]=DesMat.AB2C2.apply(contrast_l)
+X["AB2C2q"]=DesMat.AB2C2.apply(contrast_q)
 
 regr=linear_model.LinearRegression()
 # Train the model using the training sets
@@ -191,3 +183,23 @@ dat=pd.DataFrame({"FactEff":ef2,"Var1":X.columns})
 #dat
 
 HalfPlt_V1(dat,'FactEff','Var1','HalfPlotStrn.png')
+
+#IER at alpha =5% and 
+LenthsTest(dat,'FactEff',"LenthTestDisper_Str.csv",IER_Alpha=2.08)
+
+##############################################################################
+#Flash Exp
+regr=linear_model.LinearRegression()
+# Train the model using the training sets
+Zs1=Df.F_lnsBar
+R1=regr.fit(X,Zs1)
+R1.intercept_
+ef2=R1.coef_
+ef2
+dat=pd.DataFrame({"FactEff":ef2,"Var1":X.columns})
+#dat
+
+HalfPlt_V1(dat,'FactEff','Var1','HalfPlotFlash.png')
+
+#IER at alpha =5% and 
+LenthsTest(dat,'FactEff',"LenthTestDisper_Flash.csv",IER_Alpha=2.08)

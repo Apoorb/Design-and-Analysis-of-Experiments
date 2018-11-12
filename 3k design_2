@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Nov 11 13:59:57 2018
+
+@author: Apoorb
+"""
+
+import os
+import pandas as pd
+from io import StringIO # Needed to read the data
+import math #To use math.log
+import numpy as np 
+from scipy.stats import norm
+from matplotlib import pyplot as plt
+from sklearn import linear_model
+import statistics
+
+
+
+
+print('Current working directory ',os.getcwd())
+os.chdir('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
+print('Current working directory ',os.getcwd())
+
+
+# Function to plot the Half-Normal Plot
+def HalfPlt_V1(DatTemp,Theta,Var_,PltName):
+    '''
+    DatTemp : Dataset with the effecs {"FactEff":[#,#,....],"Var1":["A","B"....]}
+    Theta : column name for effects; "FactEff"
+    Var_ : column name for list of variables; "Var1"
+    PltName : Name of the Half plot
+    '''
+    #Get the # of effects
+    len1 =len(DatTemp[Var_])
+    DatTemp['absTheta']=DatTemp[Theta].apply(abs)
+    DatTemp=DatTemp.sort_values(by=['absTheta'])
+    #Need to reset index after sort orderwise ploting will have error
+    DatTemp = DatTemp.reset_index(drop=True)
+    #Get the index of each sorted effect
+    DatTemp['i']= np.linspace(1,len1,len1).tolist()
+    DatTemp['NorQuant']=DatTemp['i'].apply(lambda x:norm.ppf(0.5+0.5*(x-0.5)/len1))
+    fig1, ax1 =plt.subplots()
+    ax1.scatter(DatTemp['NorQuant'], DatTemp['absTheta'], marker='x', color='red')
+    #Name all the points using Var1, enumerate gives index and value
+    for j,type in enumerate(DatTemp[Var_]):
+        x = DatTemp['NorQuant'][j]
+        y = DatTemp['absTheta'][j]
+        ax1.text(x+0.05, y+0.05, type, fontsize=9)
+    ax1.set_title("Half-Normal Plot")
+    ax1.set_xlabel("Normal Quantile")
+    ax1.set_ylabel("effects")
+    fig1.savefig(PltName)
+    
+# Function to perform Lenth test
+#Lenth's Method for  testing signficance for experiments without
+# variance estimate
+def LenthsTest(dat,fef,fileNm,IER_Alpha=2.30):
+    '''
+    dat: Dataset with the effecs {"FactEff":[#,#,....],"Var1":["A","B"....]}
+    fef = column name for effects; "FactEff"
+    IER_Alpha = IER for n effects and alpha
+    '''
+    #Get the # of effects
+    len1=len(dat[fef])
+    dat['absEff']=dat[fef].apply(abs)
+    s0=1.5*statistics.median(map(float,dat['absEff']))
+    #Filter the effects
+    tpLst=[i for i in dat['absEff'] if i<2.5*s0]
+    #Get PSE 
+    PSE =1.5 * statistics.median(tpLst)
+    #Lenth's t stat
+    dat['t_PSE'] = (round(dat[fef]/PSE,2))
+    dat['IER_Alpha']=[IER_Alpha]*len1
+    dat['Significant'] = dat.apply(lambda x : 'Significant' if abs(x['t_PSE']) > x['IER_Alpha'] else "Not Significant", axis=1)
+    dat=dat[["Var1","FactEff","t_PSE","IER_Alpha","Significant"]]
+    dat.to_csv(fileNm)
+    return(dat)
+    
+    
+TempIO= StringIO('''
+Run A C E B D F S1 S2
+1 0 0 0 0 0 0 18.25 17.25
+2 0 0 1 1 1 1 4.75 7.5
+3 0 0 2 2 2 2 11.75 11.25
+4 0 1 0 1 1 1 13.0 8.75
+5 0 1 1 2 2 2 12.5 11.0
+6 0 1 2 0 0 0 9.25 13.0
+7 0 2 0 2 2 2 21.0 15.0
+8 0 2 1 0 0 0 3.5 5.25
+9 0 2 2 1 1 1 4.0 8.5
+10 1 0 0 0 1 2 6.75 15.75
+11 1 0 1 1 2 0 5.0 13.75
+12 1 0 2 2 0 1 17.25 13.5
+13 1 1 0 1 2 0 13.5 21.25
+14 1 1 1 2 0 1 9.0 10.25
+15 1 1 2 0 1 2 15.0 9.75
+16 1 2 0 2 0 1 10.5 8.25
+17 1 2 1 0 1 2 11.0 11.5
+18 1 2 2 1 2 0 19.75 14.25
+19 2 0 0 0 2 1 17.0 20.0
+20 2 0 1 1 0 2 17.75 17.5
+21 2 0 2 2 1 0 13.0 12.0
+22 2 1 0 1 0 2 8.75 12.25
+23 2 1 1 2 1 0 12.25 9.0
+24 2 1 2 0 2 1 13.0 11.25
+25 2 2 0 2 1 0 10.0 10.0
+26 2 2 1 0 2 1 14.5 17.75
+27 2 2 2 1 0 2 8.0 11.0
+''')
+
+Df=pd.read_csv(TempIO,delimiter=r"\s+",header=0)
+Df.head()
+Df.A=Df.A.apply(int)
+
+DesMat=Df[["A","B","C","D","E","F"]]
+DesMat.loc[:,"AB"]=(DesMat.A+DesMat.B)%3
+DesMat.loc[:,"AB2"]=(DesMat.A+2*DesMat.B)%3
+DesMat.loc[:,"AC"]=(DesMat.A+DesMat.C)%3
+DesMat.loc[:,"AC2"]=(DesMat.A+2*DesMat.C)%3
