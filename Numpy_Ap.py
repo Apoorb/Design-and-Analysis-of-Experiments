@@ -304,3 +304,18 @@ np.percentile(heights,25)
 
 #******************************************************************************
 #5 Computation on Arrays : Broadcasting
+a = np.array([0, 1, 2])
+b = np.array([5, 5, 5])
+a+b
+a+5
+
+M=np.ones((3,3))
+M+a
+
+a = np.arange(3)
+b = np.arange(3)[:, np.newaxis]
+
+print(a)
+print(b)
+a+b
+
