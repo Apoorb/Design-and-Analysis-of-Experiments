@@ -198,5 +198,109 @@ print(left)
 print(right)
 
 #******************************************************************************
-#1 Computation on NumPy Arrays: Universal Functions
+#3 Computation on NumPy Arrays: Universal Functions
+np.random.seed(0)
+def compute_reciprocals(values):
+    output=np.empty(len(values))
+    for i in range(len(values)):
+        output[i]=1.0/values[i]
+    return output
+values=np.random.randint(1,10,size=5)
 
+big_array=np.random.randint(1,100,size=1000000)
+#%timeit compute_reciprocals(big_array)
+#2.32 s ± 46.1 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+#Too Slow!
+
+# Intro to UFuncs
+%timeit (1.0/big_array)
+#6.28 ms ± 70.2 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+#Way faster
+
+#ufuncs b/w arrays
+%timeit np.arange(5)/np.arange(1,6)
+#2.97 µs ± 20.6 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
+
+#ufunc for multi D arrays
+x=np.arange(9).reshape(3,3)
+2**x
+
+## Array arithmetic
+x= np.arange(4)
+print("x =",x)
+print("x + 5 =",x+5)
+print("x*2 =",x*2)
+print("x/2 =",x/2)
+print("x//2 =",x//2) # Floor division
+print("-x =",-x)
+print("x**2 =",x**2)
+print("x%2 =",x%2) #modulus
+
+-(0.5*x+1)**2
+
+# 
+x = np.array([-2, -1, 0, 1, 2])
+abs(x) #Python implementation
+# More efficinet 
+np.abs(x)
+
+# Trigonometric func
+theta =np.linspace(0,np.pi,3)
+theta
+np.sin(theta)
+
+# Specialized ufuncs
+from scipy import special
+x=[1,5,10]
+special.gamma(x)
+special.gammaln(x) #log gamma
+
+## Specifying output
+x = np.arange(5)
+y = np.empty(5)
+np.multiply(x, 10, out=y)
+print(y)
+
+y = np.zeros(10)
+np.power(2, x, out=y[::2])
+print(y)
+
+## Aggregates
+x=np.arange(1,6)
+np.add.reduce(x)
+np.sum(x)
+np.add.accumulate(x) # Cumulative sum
+np.cumsum(x)
+np.prod(x)
+np.multiply.accumulate(x)
+np.cumprod(x)
+
+## Outer Product
+x=np.arange(1,6)
+np.multiply.outer(x,x)
+
+#******************************************************************************
+#4 Aggregations: Min, Max, and Everything In Between
+
+## Summing the values in an Array
+big_array = np.random.rand(1000000)
+#%timeit sum(big_array)
+#%timeit np.sum(big_array)
+
+M=np.random.random((3,4))
+#%timeit M.sum()
+
+M.min(axis=0) 
+
+import os
+os.chdir("C:\\Users\\a-bibeka\\Documents\\GitHub\\PythonDataScienceHandbook\\notebooks\data")
+
+import pandas as pd
+data=pd.read_csv("president_heights.csv")
+heights=np.array(data['height(cm)'])
+print(heights)
+heights.mean()
+np.percentile(heights,25)
+
+#******************************************************************************
+#5 Computation on Arrays : Broadcasting
