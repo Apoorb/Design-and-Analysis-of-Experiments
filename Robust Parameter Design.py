@@ -16,14 +16,14 @@ else:
     from io import StringIO
 import pandas as pd 
 from sklearn import linear_model
-from scipy.stats import norm
 import numpy as np
-from matplotlib import pyplot as plt
-import statistics
-import math
-sys.path.append("C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation")
+sys.path.append('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
+#sys.path.append("C:/Users/a-bibeka/Documents/GitHub/Python-Code-Compilation")
 from HalfNrm_LenthTest import HalfPlt_V1
 from HalfNrm_LenthTest import LenthsTest
+
+print('Current working directory ',os.getcwd())
+os.chdir('/Users/Apoorb/Documents/GitHub/Python-Code-Compilation')
 print('Current working directory ',os.getcwd())
 
 
@@ -97,3 +97,24 @@ dat1["Ml"]=dat1.M.apply(contrast_l)
 dat1["Mq"]=dat1.M.apply(contrast_q)
 dat1["Mc"]=dat1.M.apply(contrast_c)
 dat1.loc[:,'L']=np.where(dat1['L']==2,1,-1)
+
+
+dat1=dat1.reindex_axis(sorted(dat1.columns), axis=1)
+dat1.loc[:,"HL"]=dat1.H*dat1.L
+dat1.loc[:,"CMl"]=dat1.C*dat1.Ml
+dat1.loc[:,"AHMq"]=dat1.A*dat1.H*dat1.Mq
+
+X=dat1.loc[:,["D","H","L","Ml","HL","CMl","AHMq"]]
+Y=dat1.loc[:,"Y"]
+# Get the factorial effects
+yBarMod=linear_model.LinearRegression()
+ModSum=yBarMod.fit(X,Y)
+#Factorial effect is twice the coeff
+FactEff=np.round(2*ModSum.coef_,2).tolist()
+Var1=X.columns
+Dat2=pd.DataFrame({'FactEff':FactEff,'Var1':Var1})
+Dat2.to_excel("RBD_Q4.xls")
+    
+HalfPlt_V1(Dat2,'FactEff','Var1','HalfPlotRBD_Q4.png')
+
+LenthsTest(Dat2,'FactEff',"LenthTestRBD_Q4.csv",IER_Alpha=2.3)

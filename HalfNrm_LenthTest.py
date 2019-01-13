@@ -4,6 +4,10 @@ Created on Mon Nov 26 17:15:03 2018
 
 @author: A-Bibeka
 """
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.stats import norm
+import statistics
 
 # Function to plot the Half-Normal Plot
 def HalfPlt_V1(DatTemp,Theta,Var_,PltName):

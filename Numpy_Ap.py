@@ -293,7 +293,7 @@ M=np.random.random((3,4))
 M.min(axis=0) 
 
 import os
-os.chdir("C:\\Users\\a-bibeka\\Documents\\GitHub\\PythonDataScienceHandbook\\notebooks\data")
+os.chdir("//Users//Apoorb//Documents//GitHub//PythonDataScienceHandbook//notebooks//data")
 
 import pandas as pd
 data=pd.read_csv("president_heights.csv")
@@ -318,4 +318,292 @@ b = np.arange(3)[:, np.newaxis]
 print(a)
 print(b)
 a+b
+
+# Example 1
+M = np.ones((2, 3))
+a = np.arange(3)
+
+#Example 2
+a = np.arange(3).reshape((3, 1))
+b = np.arange(3)
+
+#Example 3
+M = np.ones((3, 2))
+a = np.arange(3)
+#M+a
+a[:, np.newaxis].shape
+M+a[:, np.newaxis]
+
+
+x = np.linspace(0, 5, 50)
+y = np.linspace(0, 5, 50)[:, np.newaxis]
+
+z = np.sin(x) ** 10 + np.cos(10 + y * x) * np.cos(x)
+plt.imshow(z, origin='lower', extent=[0, 5, 0, 5],
+           cmap='viridis')
+plt.colorbar();
+
+#******************************************************************************
+#6 Boolean-Arrays-and-Masks
+
+# Example: Counting Rainy Days 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn; seaborn.set()  # set plot styles
+os.chdir("//Users//Apoorb//Documents//GitHub//PythonDataScienceHandbook//notebooks//data")
+
+rainfall = pd.read_csv('Seattle2014.csv')['PRCP'].values
+inches = rainfall / 254.0  # 1/10mm -> inches
+inches.shape
+plt.hist(inches, 40);
+
+np.sum((inches>1)&(inches<4))
+
+print("Number days without rain:      ", np.sum(inches == 0))
+print("Number days with rain:         ", np.sum(inches != 0))
+print("Days with more than 0.5 inches:", np.sum(inches > 0.5))
+print("Rainy days with < 0.2 inches  :", np.sum((inches > 0) &
+                                                (inches < 0.2)))
+
+# construct a mask of all rainy days
+rainy = (inches > 0)
+
+# construct a mask of all summer days (June 21st is the 172nd day)
+days = np.arange(365)
+summer = (days > 172) & (days < 262)
+
+
+print("Median precip on rainy days in 2014 (inches):   ",
+      np.median(inches[rainy]))
+print("Median precip on summer days in 2014 (inches):  ",
+      np.median(inches[summer]))
+print("Maximum precip on summer days in 2014 (inches): ",
+      np.max(inches[summer]))
+print("Median precip on non-summer rainy days (inches):",
+      np.median(inches[rainy & ~summer]))
+
+
+#******************************************************************************
+#7 Fancy Indexing
+import numpy as np
+rand = np.random.RandomState(42)
+
+x = rand.randint(100, size=10)
+print(x)
+#x[1]
+
+ind= [3,7,4]
+x[ind]
+
+#Fancy Indexing
+ind = np.array([[3, 7],
+                [4, 5]])
+x[ind]
+
+
+X = np.arange(12).reshape((3, 4))
+X
+row = np.array([0, 1, 2])
+col = np.array([2, 1, 3])
+X[row, col]  # First value is X[0,2], 2nd is X[1,1], 3rd is X[2,3]
+
+X[row[:, np.newaxis], col] # Similar to broadcasting
+
+# Modifying Values with Fancy Indexing
+x = np.arange(10)
+i = np.array([2, 1, 8, 4])
+x[i] = 99
+print(x)
+
+x[i] -= 10
+print(x)
+
+# Prob with repeated indices
+x = np.zeros(10)
+x[[0, 0]] = [4, 6]
+print(x)
+
+
+i = [2, 3, 3, 4, 4, 4]
+x[i] += 1
+x
+
+x = np.zeros(10)
+np.add.at(x, i, 1)
+print(x)
+
+
+
+
+## Example: Binning Data
+
+np.random.seed(42)
+x = np.random.randn(100)
+
+# compute a histogram by hand
+bins = np.linspace(-5, 5, 20)
+counts = np.zeros_like(bins)
+
+# find the appropriate bin for each x
+i = np.searchsorted(bins, x)
+
+# add 1 to each of these bins
+np.add.at(counts, i, 1)
+
+# plot the results
+plt.plot(bins, counts, linestyle='steps');
+
+
+plt.hist(x, bins, histtype='step');
+
+
+#******************************************************************************
+#8 Sorting Arrays
+
+#Selection Sort
+
+import numpy as np
+
+def selection_sort(x):
+    for i in range(len(x)):
+        swap = i + np.argmin(x[i:])
+        (x[i], x[swap]) = (x[swap], x[i])
+    return x
+
+x = np.array([2, 1, 4, 3, 5])
+selection_sort(x)
+
+#Sorting along rows or columns
+rand = np.random.RandomState(42)
+X = rand.randint(0, 10, (4, 6))
+print(X)
+
+# sort each column of X
+np.sort(X, axis=0)
+
+# sort each row of X
+np.sort(X, axis=1)
+
+
+## Partial Sorts: Partitioning
+
+x = np.array([7, 2, 3, 1, 6, 5, 4])
+np.partition(x, 3)
+
+np.partition(X, 2, axis=1)
+
+## Example: k-Nearest Neighbors
+X = rand.rand(10, 2)
+import matplotlib.pyplot as plt
+import seaborn; seaborn.set() # Plot styling
+plt.scatter(X[:, 0], X[:, 1], s=100);
+
+dist_sq = np.sum((X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2, axis=-1)
+
+
+# for each pair of points, compute differences in their coordinates
+differences = X[:, np.newaxis, :] - X[np.newaxis, :, :]
+differences.shape
+# square the coordinate differences
+sq_differences = differences ** 2
+sq_differences.shape
+
+
+# sum the coordinate differences to get the squared distance
+dist_sq = sq_differences.sum(2)
+dist_sq = sq_differences.sum(-1)
+dist_sq.shape
+
+#Double Check
+dist_sq.diagonal()
+
+nearest = np.argsort(dist_sq, axis=1)
+print(nearest)
+
+K = 2
+nearest_partition = np.argpartition(dist_sq, K + 1, axis=1)
+
+plt.scatter(X[:, 0], X[:, 1], s=100)
+# draw lines from each point to its two nearest neighbors
+K = 2
+
+for i in range(X.shape[0]):
+    for j in nearest_partition[i, :K+1]:
+        # plot a line from X[i] to X[j]
+        # use some zip magic to make it happen:
+        plt.plot(*zip(X[j], X[i]), color='black')
+        
+        
+#******************************************************************************
+#9 Structured Data: Numpy's Structured Arrays
+import numpy as np
+name = ['Alice', 'Bob', 'Cathy', 'Doug']
+age = [25, 45, 37, 19]
+weight = [55.0, 85.5, 68.0, 61.5]
+
+
+# Use a compound data type for structured arrays
+data = np.zeros(4, dtype={'names':('name', 'age', 'weight'),
+                          'formats':('U10', 'i4', 'f8')})
+print(data.dtype)
+
+
+data['name'] = name
+data['age'] = age
+data['weight'] = weight
+print(data)
+
+# Get all names
+data['name']
+# Get first row
+data[0]
+
+# Get the name from the last row
+data[-1]['name']
+
+# Get names where age is under 30
+data[data['age'] < 30]['name']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
