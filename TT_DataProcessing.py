@@ -10,7 +10,8 @@ import os
 import pandas as pd
 import numpy as np
 import glob
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 #os.chdir("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/NB/NB 2045")
 os.getcwd()
 ListFiles=glob.glob('D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/NB/NB 2045/*Vehicle Travel Time Results.att')
@@ -56,6 +57,11 @@ Findat["LatentDelay"]=(Findat["InpVol"]-Findat["VEHS(ALL)"])*(Findat["TRAVTM(ALL
 Findat["LatentDelay"]=np.round(Findat["LatentDelay"],1)
 Findat["TotalDelay"] = np.round(Findat["Delay"]+Findat["LatentDelay"],1)
 Findat_NB_69= Findat[Findat["TTSegNm"]=="69_NB"]
+Findat_NB_69["Sen"]=Findat_NB_69["Scenario"].apply(lambda x: str.split(x,"_")[0])
+Findat_NB_69["LaneDrLoc"]=Findat_NB_69["Scenario"].apply(lambda x: str.split(x," ")[-1])
+Findat_NB_69["LaneDrLoc"]=Findat_NB_69["LaneDrLoc"].apply(lambda x: "L" if x=="Ln" else x)
+
+g=sns.catplot(x="Sen",y="SMS",hue="LaneDrLoc",col="Time",data=Findat_NB_69,kind="bar",order=["Base","4+2","5+1","5+2"])
 Findat_Wd=pd.pivot_table(Findat_NB_69,index="Scenario",columns=["Time","Year"],values =["SMS","VEHS(ALL)","Delay","LatentDelay","TotalDelay"])
 new_index=['Base','4+2_NoShared Ln R','4+2_NoShared Ln','5+1_Flared Ln R','5+1_Flared Ln','5+2_Shared Ln R','5+2_Shared Ln']
 Findat_Wd=Findat_Wd.reindex(new_index)
@@ -65,8 +71,8 @@ Findat_Wd
 #################################
 # SB 
 ListFiles=glob.glob('D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/SB/SB 2045/*Vehicle Travel Time Results.att')
-#Lfs2=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/SB/SB 2045/*Vehicle Travel Time Results.att")
-#ListFiles=ListFiles+Lfs2
+Lfs2=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/SB/SB 2045/*Vehicle Travel Time Results.att")
+ListFiles=ListFiles+Lfs2
 #file = ListFiles[1]
 #file = "AM 2045 NB Base_Vehicle Travel Time Results.att"
 def TTSegName(x):

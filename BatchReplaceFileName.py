@@ -10,7 +10,7 @@ import shutil
 import re
 
 print('Current working directory ',os.getcwd())
-os.chdir('C:/Users/a-bibeka/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V11/NB/NB 2025') 
+os.chdir('D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/SB/SB 2025') 
 print('Current working directory ',os.getcwd())
 # Replace _ to - in a file name 
 #[os.rename(f, f.replace('_', '-')) for f in os.listdir('.') if not f.startswith('.')]
