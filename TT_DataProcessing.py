@@ -12,11 +12,19 @@ import numpy as np
 import glob
 import seaborn as sns
 import matplotlib.pyplot as plt
-#os.chdir("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/NB/NB 2045")
+import matplotlib.patches as mpatches
+
+
+os.chdir("D:/Dropbox/TTI_Projects/Road User Cost")
 os.getcwd()
+########################################################################################################################
+# Get results directory
 ListFiles=glob.glob('D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/NB/NB 2045/*Vehicle Travel Time Results.att')
 Lfs2=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/NB/NB 2045/*Vehicle Travel Time Results.att")
-ListFiles=ListFiles+Lfs2
+Lfs3=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/NB/NB 2025/*Vehicle Travel Time Results.att")
+Lfs4=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/NB/NB 2025/*Vehicle Travel Time Results.att")
+
+ListFiles=ListFiles+Lfs2+Lfs3+Lfs4
 #file = ListFiles[1]
 #file = "AM 2045 NB Base_Vehicle Travel Time Results.att"
 def TTSegName(x):
@@ -56,24 +64,67 @@ Findat=Findat.merge(InputVolDat,how='inner',on=["Scenario","Year","Time","TTSegN
 Findat["LatentDelay"]=(Findat["InpVol"]-Findat["VEHS(ALL)"])*(Findat["TRAVTM(ALL)"]-(Findat["DISTTRAV(ALL)"]/(1.47*65)))/3600
 Findat["LatentDelay"]=np.round(Findat["LatentDelay"],1)
 Findat["TotalDelay"] = np.round(Findat["Delay"]+Findat["LatentDelay"],1)
+Findat["Sen"]=Findat["Scenario"].apply(lambda x: str.split(x,"_")[0])
+Findat["LaneDrLoc"]=Findat["Scenario"].apply(lambda x: str.split(x," ")[-1])
+Findat["LaneDrLoc"]=Findat["LaneDrLoc"].apply(lambda x: "L" if x=="Ln" else x)
+########################################################################################################################
 Findat_NB_69= Findat[Findat["TTSegNm"]=="69_NB"]
-Findat_NB_69["Sen"]=Findat_NB_69["Scenario"].apply(lambda x: str.split(x,"_")[0])
-Findat_NB_69["LaneDrLoc"]=Findat_NB_69["Scenario"].apply(lambda x: str.split(x," ")[-1])
-Findat_NB_69["LaneDrLoc"]=Findat_NB_69["LaneDrLoc"].apply(lambda x: "L" if x=="Ln" else x)
+Findat_NB_Spur= Findat[Findat["TTSegNm"]=="Spur_NB"]
 
-g=sns.catplot(x="Sen",y="SMS",hue="LaneDrLoc",col="Time",data=Findat_NB_69,kind="bar",order=["Base","4+2","5+1","5+2"])
+# SB IH 69 Plots
+def NB_plots(x1="Sen",y1="SMS",ylim1=(0,65),xlab="",ylab="IH 69 NB Average Speed in 2025",title_AB="IH 69 NB Average Speed in 2025",data1=Findat_NB_69[Findat_NB_69["Year"]==2025],saveNm="NB69_2025.png"):
+    sns.set(style="whitegrid", color_codes=True)
+    sns.palplot(sns.color_palette("Greys"))
+    AB_palette= ["white",sns.xkcd_rgb["cool grey"],sns.xkcd_rgb["charcoal grey"]]
+    g=sns.catplot(x=x1,y=y1,col="Time",hue="LaneDrLoc",
+                  data=data1,
+                  order=["Base","4+2","5+1","5+2"],kind="bar",
+                  hue_order=["Base","L","R"],palette=AB_palette,
+                  sharex=True,sharey=True,legend=False,
+                  edgecolor="black")
+    g.set(ylim=ylim1)
+    g.set_axis_labels(xlab,ylab)
+    g.fig.subplots_adjust(top=0.85)
+    g.fig.suptitle(title_AB,fontsize=16) # can also get the figure from plt.gcf()
+    g.set_titles("{col_name}",fontsize=12)
+    
+    #g._legend.set_title("Lane Drop")
+    #new_labels = ['Base', 'Add Lane to the Left','Add Lane to the Right']
+    #for t, l in zip(g._legend.texts, new_labels): t.set_text(l)
+    
+    # Put the legend out of the figure
+    cool_grey = mpatches.Patch(color=sns.xkcd_rgb["cool grey"], label='Add Lane to the Left')
+    charcoal_grey = mpatches.Patch(color=sns.xkcd_rgb["charcoal grey"], label='Add Lane to the Right')
+    plt.legend(handles=[cool_grey,charcoal_grey],
+               loc="lower center",ncol=4,bbox_to_anchor=(-0.3,-0.2,0.5,0.5))
+    g.savefig(saveNm)
+
+NB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="IH 69 NB Average Speed in 2025",data1=Findat_NB_69[Findat_NB_69["Year"]==2025],saveNm="NB69_2025.png")
+NB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="Spur 527 NB Average Speed in 2025",data1=Findat_NB_Spur[Findat_NB_Spur["Year"]==2025],saveNm="NB_Spur_2025.png")
+NB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="IH 69 NB Average Speed in 2045",data1=Findat_NB_69[Findat_NB_69["Year"]==2045],saveNm="NB69_2045.png")
+NB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="Spur 527 NB Average Speed in 2045",data1=Findat_NB_Spur[Findat_NB_Spur["Year"]==2045],saveNm="NB_Spur_2045.png")
+
+NB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="IH 69 NB Total Delay in 2025",data1=Findat_NB_69[Findat_NB_69["Year"]==2025],saveNm="Del_NB69_2025.png")
+NB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="Spur 527 NB Total Delay in 2025",data1=Findat_NB_Spur[Findat_NB_Spur["Year"]==2025],saveNm="Del_NB_Spur_2025.png")
+NB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="IH 69 NB Total Delay in 2045",data1=Findat_NB_69[Findat_NB_69["Year"]==2045],saveNm="Del_NB69_2045.png")
+NB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="Spur 527 NB Total Delay in 2045",data1=Findat_NB_Spur[Findat_NB_Spur["Year"]==2045],saveNm="Del_NB_Spur_2045.png")
+
+
+# Put a legend to the right s
 Findat_Wd=pd.pivot_table(Findat_NB_69,index="Scenario",columns=["Time","Year"],values =["SMS","VEHS(ALL)","Delay","LatentDelay","TotalDelay"])
 new_index=['Base','4+2_NoShared Ln R','4+2_NoShared Ln','5+1_Flared Ln R','5+1_Flared Ln','5+2_Shared Ln R','5+2_Shared Ln']
 Findat_Wd=Findat_Wd.reindex(new_index)
 
 Findat_Wd
 
-#################################
-# SB 
+########################################################################################################################
+# SB Data Processing
 ListFiles=glob.glob('D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/SB/SB 2045/*Vehicle Travel Time Results.att')
 Lfs2=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/SB/SB 2045/*Vehicle Travel Time Results.att")
-ListFiles=ListFiles+Lfs2
-#file = ListFiles[1]
+Lfs3=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM AM Peak V14/SB/SB 2025/*Vehicle Travel Time Results.att")
+Lfs4=glob.glob("D:/Dropbox/TTI_Projects/Road User Cost/VISSIM PM Peak V14/SB/SB 2025/*Vehicle Travel Time Results.att")
+
+ListFiles=ListFiles+Lfs2+Lfs3+Lfs4#file = ListFiles[1]
 #file = "AM 2045 NB Base_Vehicle Travel Time Results.att"
 def TTSegName(x):
     if(x==1):Nm="69_SB"
@@ -112,7 +163,62 @@ Findat=Findat.merge(InputVolDat,how='inner',on=["Scenario2","Year","Time","TTSeg
 Findat["LatentDelay"]=(Findat["InpVol"]-Findat["VEHS(ALL)"])*(Findat["TRAVTM(ALL)"]-(Findat["DISTTRAV(ALL)"]/(1.47*65)))/3600
 Findat["LatentDelay"]=np.round(Findat["LatentDelay"],1)
 Findat["TotalDelay"] = np.round(Findat["Delay"]+Findat["LatentDelay"],1)
+Findat["Sen"]=Findat["Scenario2"].apply(lambda x: str.split(x,"_")[0])
+Findat["LaneDrLoc"]=Findat["Scenario2"].apply(lambda x: str.split(x,"_")[-1])
+
+########################################################################################################################
+# Get the Data for SB 69 and Spur
 Findat_SB_69= Findat[Findat["TTSegNm"]=="69_SB"]
+Findat_SB_Spur= Findat[Findat["TTSegNm"]=="Spur_SB"]
+
+########################################################################################################################
+# SB IH 69 Plots
+sns.set(style="whitegrid", color_codes=True)
+
+# SB IH 69 Plots
+def SB_plots(x1="Sen",y1="SMS",ylim1=(0,65),xlab="",ylab="IH 69 SB Average Speed in 2025",title_AB="IH 69 SB Average Speed in 2025",data1=Findat_SB_69[Findat_SB_69["Year"]==2025],saveNm="SB69_2025.png"):
+    sns.set(style="whitegrid", color_codes=True)
+    sns.palplot(sns.color_palette("Greys"))
+    AB_palette1= ["white",sns.xkcd_rgb["light grey"],sns.xkcd_rgb["cool grey"],sns.xkcd_rgb["charcoal grey"]]
+    g3=sns.catplot(x=x1,y=y1,col="Time",hue="LaneDrLoc",
+                  data=data1,
+                  order=["Base","4+2","5+1"],kind="bar",
+                  hue_order=["Base","1500ft","2500ft","No LnDrop"],palette=AB_palette1,
+                  sharex=True,sharey=True,legend=False,
+                  edgecolor="black")
+    g3.set(ylim=ylim1)
+    g3.set_axis_labels(xlab,ylab)
+    g3.fig.subplots_adjust(top=0.85)
+    g3.fig.suptitle(title_AB,fontsize=16) # can also get the figure from plt.gcf()
+    g3.set_titles("{col_name}",fontsize=12)
+    
+    #g._legend.set_title("Lane Drop")
+    #new_labels = ['Base', 'Add Lane to the Left','Add Lane to the Right']
+    #for t, l in zip(g._legend.texts, new_labels): t.set_text(l)
+    
+    # Put the legend out of the figure
+    # Put the legend out of the figure
+    #white = mpatches.Patch(color="white", label='Base')
+    Lt_grey = mpatches.Patch(color=sns.xkcd_rgb["light grey"], label='Lane Drop at 1500 ft.')
+    cool_grey = mpatches.Patch(color=sns.xkcd_rgb["cool grey"], label='Lane Drop at 2500 ft.')
+    charcoal_grey = mpatches.Patch(color=sns.xkcd_rgb["charcoal grey"], label='No Lane Drop')
+    
+    plt.legend(handles=[Lt_grey,cool_grey,charcoal_grey],
+               loc="lower center",ncol=4,bbox_to_anchor=(-0.3,-0.2,0.5,0.5))
+    g3.savefig(saveNm)
+
+SB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="IH 69 SB Average Speed in 2025",data1=Findat_SB_69[Findat_SB_69["Year"]==2025],saveNm="SB69_2025.png")
+SB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="Spur 527 SB Average Speed in 2025",data1=Findat_SB_Spur[Findat_SB_Spur["Year"]==2025],saveNm="SB_Spur_2025.png")
+SB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="IH 69 SB Average Speed in 2045",data1=Findat_SB_69[Findat_SB_69["Year"]==2045],saveNm="SB69_2045.png")
+SB_plots(x1="Sen",y1="SMS",xlab="",ylab="Average Speed (mph)",title_AB="Spur 527 SB Average Speed in 2045",data1=Findat_SB_Spur[Findat_SB_Spur["Year"]==2045],saveNm="SB_Spur_2045.png")
+
+SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="IH 69 SB Total Delay in 2025",data1=Findat_SB_69[Findat_SB_69["Year"]==2025],saveNm="Del_SB69_2025.png")
+SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="Spur 527 SB Total Delay in 2025",data1=Findat_SB_Spur[Findat_SB_Spur["Year"]==2025],saveNm="Del_SB_Spur_2025.png")
+SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="IH 69 SB Total Delay in 2045",data1=Findat_SB_69[Findat_SB_69["Year"]==2045],saveNm="Del_SB69_2045.png")
+SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="Spur 527 SB Total Delay in 2045",data1=Findat_SB_Spur[Findat_SB_Spur["Year"]==2045],saveNm="Del_SB_Spur_2045.png")
+
+
+
 Findat_Wd_SB=pd.pivot_table(Findat_SB_69,index="Scenario2",columns=["Time","Year"],values =["SMS","VEHS(ALL)","Delay","LatentDelay","TotalDelay"])
 new_index=['Base','4+2_1500ft','4+2_2500ft','4+2_No LnDrop','5+1_1500ft','5+1_2500ft','5+1_No LnDrop']
 Findat_Wd_SB=Findat_Wd_SB.reindex(new_index)
