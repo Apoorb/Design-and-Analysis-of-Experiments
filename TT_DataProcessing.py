@@ -13,7 +13,7 @@ import glob
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-
+import datetime
 
 os.chdir("D:/Dropbox/TTI_Projects/Road User Cost")
 os.getcwd()
@@ -217,11 +217,77 @@ SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",
 SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="IH 69 SB Total Delay in 2045",data1=Findat_SB_69[Findat_SB_69["Year"]==2045],saveNm="Del_SB69_2045.png")
 SB_plots(x1="Sen",y1="TotalDelay",ylim1=(0,900),xlab="",ylab="Total Delay (hr)",title_AB="Spur 527 SB Total Delay in 2045",data1=Findat_SB_Spur[Findat_SB_Spur["Year"]==2045],saveNm="Del_SB_Spur_2045.png")
 
-
-
 Findat_Wd_SB=pd.pivot_table(Findat_SB_69,index="Scenario2",columns=["Time","Year"],values =["SMS","VEHS(ALL)","Delay","LatentDelay","TotalDelay"])
 new_index=['Base','4+2_1500ft','4+2_2500ft','4+2_No LnDrop','5+1_1500ft','5+1_2500ft','5+1_No LnDrop']
 Findat_Wd_SB=Findat_Wd_SB.reindex(new_index)
 
 
+########################################################################################################################
+# Tech Memo Tables
+# Undertand the data format before merging
 
+[Findat_NB_69.columns,Findat_NB_69.shape]
+[Findat_NB_Spur.columns,Findat_NB_Spur.shape]
+[Findat_SB_69.columns,Findat_SB_69.shape]
+[Findat_SB_Spur.columns,Findat_SB_Spur.shape]
+
+Mer_Dat= pd.DataFrame()
+
+d1=Findat_NB_69.loc[:,["Sen","SenDir","Year","Time","TTSegNm","TotalDelay","SMS","VEHS(ALL)","LaneDrLoc"]].copy()
+d2=Findat_NB_Spur.loc[:,["Sen","SenDir","Year","Time","TTSegNm","TotalDelay","SMS","VEHS(ALL)","LaneDrLoc"]].copy()
+d3=Findat_SB_69.loc[:,["Sen","SenDir","Year","Time","TTSegNm","TotalDelay","SMS","VEHS(ALL)","LaneDrLoc"]].copy()
+d4=Findat_SB_Spur.loc[:,["Sen","SenDir","Year","Time","TTSegNm","SMS","VEHS(ALL)","TotalDelay","LaneDrLoc"]].copy()
+Mer_Dat=pd.concat([d1,d2,d3,d4])
+Mer_Dat.loc[:,"TotalDelay"]=np.round(Mer_Dat.loc[:,"TotalDelay"],0)
+Mer_Dat.loc[:,"TotalDelay"]=Mer_Dat.loc[:,"TotalDelay"].apply(np.int)
+Mer_Dat.loc[:,"SMS"]=np.round(Mer_Dat.loc[:,"SMS"],0)
+Mer_Dat.loc[:,"SMS"]=Mer_Dat.loc[:,"SMS"].apply(np.int)
+Mer_Dat.loc[:,"TTSegNm"]=Mer_Dat.loc[:,"TTSegNm"].apply(lambda x: str.split(x,"_")[0])
+Mer_Dat.loc[:,"TTSegNm"]=Mer_Dat.loc[:,"TTSegNm"].apply(lambda x:"IH 69" if x=="69" else "Spur 527")
+
+def tempfun(x):
+    y=""
+    if x=="Base":
+        y="Base Conditions"
+    elif x=="L":
+        y="Add Lane to Left"
+    elif x=="R":
+        y="Add Lane to Right"
+    elif x=="1500ft":
+        y="Lane Drop at 1500 ft"
+    elif x=="2500ft":
+        y="Lane Drop at 2500 ft"
+    elif x=="No LnDrop":
+        y="No Lane Drop"
+    else:
+        y="nan"
+    return y;
+
+Mer_Dat.loc[:,"LaneDrLoc"]=Mer_Dat.loc[:,"LaneDrLoc"].apply(tempfun)
+
+
+def PivFun(Dat,PivVal="TotalDelay"):
+    PivDat =pd.pivot_table(Dat,index=["SenDir","Sen","LaneDrLoc"],columns=["TTSegNm","Time"],values =[PivVal])
+    new_index = pd.MultiIndex(levels=[['NB','SB'],["Base","4+2","5+1","5+2"], ['Base Conditions', "Add Lane to Left", "Add Lane to Right","Lane Drop at 1500 ft","Lane Drop at 2500 ft","No Lane Drop"]], 
+                              labels=[[0,0,0,0,0,0,0,1,1,1,1,1,1,1],[0,1,1,2,2,3,3,0,1,1,1,2,2,2],[0,1,2,1,2,1,2,0,3,4,5,3,4,5]],names=['SenDir', 'Sen',"LaneDrLoc"]
+                              )
+    PivDat=PivDat.reindex(new_index)
+    return PivDat;
+def PivFun1(Dat,PivVal="TotalDelay"):
+    PivDat =pd.pivot_table(Dat,index=["SenDir","Sen","LaneDrLoc"],columns=["Time","Year"],values =[PivVal],aggfunc='sum')
+    new_index = pd.MultiIndex(levels=[['NB','SB'],["Base","4+2","5+1","5+2"], ['Base Conditions', "Add Lane to Left", "Add Lane to Right","Lane Drop at 1500 ft","Lane Drop at 2500 ft","No Lane Drop"]], 
+                              labels=[[0,0,0,0,0,0,0,1,1,1,1,1,1,1],[0,1,1,2,2,3,3,0,1,1,1,2,2,2],[0,1,2,1,2,1,2,0,3,4,5,3,4,5]],names=['SenDir', 'Sen',"LaneDrLoc"]
+                              )
+    PivDat=PivDat.reindex(new_index)
+    return PivDat;
+
+dt_buf=datetime.datetime.now()
+dt_buf1=dt_buf.strftime("%m-%d-%Y")
+writer=pd.ExcelWriter("Res"+dt_buf1+".xlsx")
+PivFun(Mer_Dat[Mer_Dat["Year"]==2045],"SMS").to_excel(writer,"SMS2045")
+PivFun(Mer_Dat[Mer_Dat["Year"]==2025],"TotalDelay").to_excel(writer,"TotDelay2025")
+PivFun(Mer_Dat[Mer_Dat["Year"]==2025],"VEHS(ALL)").to_excel(writer,"Throughput")
+PivFun(Mer_Dat[Mer_Dat["Year"]==2045],"SMS").to_excel(writer,"AuxDocSMS2045")
+PivFun1(Mer_Dat,"TotalDelay").to_excel(writer,"AuxDocTDelay")
+
+writer.save()
